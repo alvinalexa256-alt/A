@@ -1249,19 +1249,21 @@ async function buildArticleWithStreams(title,ev,isHighlights=false){
 // ═══ LOGO ENGINE ═══
 function wsrv(url,size=200){if(!url||url.startsWith('data:')||url.startsWith('blob:'))return url;return'https://wsrv.nl/?url='+encodeURIComponent(url)+'&w='+size+'&h='+size+'&fit=contain&n=-1&we';}
 const TSDB_INFLIGHT=new Set();
+function fbLogo(name){return'https://ui-avatars.com/api/?name='+encodeURIComponent(name)+'&size=128&background=1a1a1a&color=e53935&bold=true&rounded=true';}
 async function fetchLogo(teamName){
   if(!teamName)return'';const key=teamName.toLowerCase().trim();
   if(LOGO_OVERRIDES[key])return LOGO_OVERRIDES[key];
-  if(LOGO_CACHE[key]!==undefined)return LOGO_CACHE[key];
-  if(TSDB_INFLIGHT.has(key)){await new Promise(r=>setTimeout(r,2500));return LOGO_CACHE[key]||'';}
+  if(LOGO_CACHE[key]!==undefined && LOGO_CACHE[key] !== '')return LOGO_CACHE[key];
+  if(TSDB_INFLIGHT.has(key)){await new Promise(r=>setTimeout(r,1500));return LOGO_CACHE[key]||fbLogo(teamName);}
   TSDB_INFLIGHT.add(key);
   try{
     const res=await fetch(TSDB+'/searchteams.php?t='+encodeURIComponent(teamName));
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();const team=data?.teams?.[0];
     const url=team?.strTeamBadge||team?.strBadge||team?.strTeamLogo||'';
-    LOGO_CACHE[key]=url;persistLogoCache();return url;
-  }catch(e){LOGO_CACHE[key]='';return'';}
+    if(url){LOGO_CACHE[key]=url;persistLogoCache();return url;}
+    else {return fbLogo(teamName);}
+  }catch(e){return fbLogo(teamName);}
   finally{TSDB_INFLIGHT.delete(key);}
 }
 let logoPersistTimer;
@@ -1282,9 +1284,9 @@ async function enrichLogos(events){
       const override=LOGO_OVERRIDES[key]||'';const tsdb=LOGO_CACHE[key]||'';
       const espnSafe=s.logo?s.logo.replace(/^http:\/\//i,'https://'):'';
       if(override){s.logo=override;resolved++;}
-      else if(tsdb){s.logo=tsdb;resolved++;}
       else if(espnSafe){s.logo=espnSafe;resolved++;}
-      else s.logo='';
+      else if(tsdb){s.logo=tsdb;resolved++;}
+      else s.logo=fbLogo(s.name);
     }
   }
   const pct=total?Math.round((resolved/total)*100):0;
@@ -1295,8 +1297,8 @@ async function enrichLogos(events){
 }
 function logoChipImg(url,teamName,chipId){
   const chip=document.getElementById(chipId);if(!chip)return;
-  if(url){chip.innerHTML='<img src="'+wsrv(url,80)+'" onerror="this.style.display=\'none\'" alt="'+(teamName||'')+'" style="width:100%;height:100%;object-fit:contain">';}
-  else{chip.textContent=(teamName||'?')[0].toUpperCase();if(teamName)fetchLogo(teamName).then(u=>{if(u)chip.innerHTML='<img src="'+wsrv(u,80)+'" alt="'+teamName+'" style="width:100%;height:100%;object-fit:contain">';});}
+  if(url){chip.innerHTML='<img src="'+wsrv(url,80)+'" onerror="this.src=\''+fbLogo(teamName)+'\'" alt="'+(teamName||'')+'" style="width:100%;height:100%;object-fit:contain">';}
+  else{chip.innerHTML='<img src="'+fbLogo(teamName)+'" style="width:100%;height:100%;object-fit:contain">';if(teamName)fetchLogo(teamName).then(u=>{if(u)chip.innerHTML='<img src="'+wsrv(u,80)+'" onerror="this.src=\''+fbLogo(teamName)+'\'" alt="'+teamName+'" style="width:100%;height:100%;object-fit:contain">';});}
 }
 
 // ═══ TITLE PARSER ═══
@@ -1330,7 +1332,7 @@ async function drawMatchThumbnail(cv,opts){
   for(const[img,lx]of[[hImg,hcx],[aImg,acx]]){
     ctx.save();ctx.beginPath();ctx.arc(lx,lcy,R+3*sc,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=2*sc;ctx.stroke();ctx.beginPath();ctx.arc(lx,lcy,R,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.05)';ctx.fill();ctx.clip();
     if(img){ctx.shadowColor='rgba(255,255,255,.15)';ctx.shadowBlur=10*sc;ctx.drawImage(img,lx-R*.85,lcy-R*.85,R*1.7,R*1.7);}
-    else{const teamName=lx===hcx?home:away;ctx.shadowBlur=0;ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(lx,lcy,R,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='900 '+Math.round(R*.9)+'px "Barlow Condensed",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((teamName||'?')[0].toUpperCase(),lx,lcy);}
+    else{const teamName=lx===hcx?home:away;const fallback=await loadImgProxy(fbLogo(teamName));if(fallback){ctx.drawImage(fallback,lx-R*.85,lcy-R*.85,R*1.7,R*1.7);}else{ctx.shadowBlur=0;ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(lx,lcy,R,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='900 '+Math.round(R*.9)+'px "Barlow Condensed",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((teamName||'?')[0].toUpperCase(),lx,lcy);}}
     ctx.restore();
   }
   const vsR=Math.round(28*sc);ctx.save();ctx.shadowColor='#e63946';ctx.shadowBlur=24*sc;ctx.fillStyle='#e63946';ctx.beginPath();ctx.arc(cx,lcy,vsR,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.restore();
@@ -1493,8 +1495,8 @@ function renderMatchCard(ev){
   const thumbBadge=pl?.thumb?'<span class="thumb-badge">🖼️ Thumb</span>':'';
   const hLogo=ev.home.logo||LOGO_CACHE[ev.home.name.toLowerCase()]||'';
   const aLogo=ev.away.logo||LOGO_CACHE[ev.away.name.toLowerCase()]||'';
-  const hChip=hLogo?'<div class="logo-chip"><img src="https://wsrv.nl/?url='+encodeURIComponent(hLogo)+'&w=80&h=80&fit=contain&n=-1&we" onerror="this.parentElement.textContent=\''+ev.home.name[0]+'\'" alt="'+ev.home.name+'" style="width:100%;height:100%;object-fit:contain"></div>':'<div class="logo-chip">'+ev.home.name[0]+'</div>';
-  const aChip=aLogo?'<div class="logo-chip"><img src="https://wsrv.nl/?url='+encodeURIComponent(aLogo)+'&w=80&h=80&fit=contain&n=-1&we" onerror="this.parentElement.textContent=\''+ev.away.name[0]+'\'" alt="'+ev.away.name+'" style="width:100%;height:100%;object-fit:contain"></div>':'<div class="logo-chip">'+ev.away.name[0]+'</div>';
+  const hChip='<div class="logo-chip"><img src="'+(hLogo?'https://wsrv.nl/?url='+encodeURIComponent(hLogo)+'&w=80&h=80&fit=contain&n=-1&we':fbLogo(ev.home.name))+'" onerror="this.src=\''+fbLogo(ev.home.name)+'\'" alt="'+ev.home.name+'" style="width:100%;height:100%;object-fit:contain"></div>';
+  const aChip='<div class="logo-chip"><img src="'+(aLogo?'https://wsrv.nl/?url='+encodeURIComponent(aLogo)+'&w=80&h=80&fit=contain&n=-1&we':fbLogo(ev.away.name))+'" onerror="this.src=\''+fbLogo(ev.away.name)+'\'" alt="'+ev.away.name+'" style="width:100%;height:100%;object-fit:contain"></div>';
   return'<div class="event-card '+(pl?.thumb?'has-thumb':'')+' '+(pl?.postId?'posted':'')+'" data-id="'+ev.id+'"><div class="ec-top"><span class="ec-league">'+ev.league.icon+' '+ev.league.name+'</span><div style="display:flex;align-items:center;gap:4px">'+thumbBadge+badge+'<span class="ec-status '+sc+'">'+ev.status+'</span></div></div><div class="ec-match"><div class="ec-team">'+hChip+'<div class="ec-team-name">'+ev.home.name+'</div></div><div style="display:flex;flex-direction:column;align-items:center"><div class="ec-vs">'+(ev.home.score!==''?ev.home.score+' – '+ev.away.score:'vs')+'</div><div class="ec-time">'+ts+'</div></div><div class="ec-team">'+aChip+'<div class="ec-team-name">'+ev.away.name+'</div></div></div>'+(pl?.postUrl?'<div style="font-size:.62rem;color:var(--muted2)">📝 <a href="'+pl.postUrl+'" target="_blank" style="color:var(--blue)">View post</a></div>':'')+'<div class="ec-actions"><button class="btn-red btn-sm" onclick="genAndFill(\''+sid+'\')">✍️ Gen</button><button class="btn-blue btn-sm" onclick="quickPostEv(\''+sid+'\')">📤 Post</button><button class="btn-gold btn-sm" onclick="genThumbForEv(\''+sid+'\')">🖼️ Thumb</button><button class="btn-orange btn-sm" onclick="openHLForEv(\''+sid+'\')" title="Post Highlights / Update">🎬 HL</button></div></div>';
 }
 function renderRaceCard(ev){
