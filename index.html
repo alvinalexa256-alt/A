@@ -2148,7 +2148,48 @@ function buildHighlightsPlayerIframe(url){
   const playerBase = CFG.playerBase || 'https://sports803.github.io/player/';
   // The embed parameter should get the raw embed URL (not double-encoded)
   const src = playerBase + '?embed=' + encodeURIComponent(url);
-  return '<div style="margin:18px 0;position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px"><iframe loading="lazy" src="'+src+'" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;border-radius:10px" allowfullscreen allow="autoplay; encrypted-media"></iframe></div>';
+ <style>
+.sp803-wrap{width:100%;margin:16px 0;font-family:'Barlow Condensed','Segoe UI',Arial,sans-serif}
+.sp803-card{background:#0d1117;border-radius:10px;overflow:hidden;border:1px solid #1a2535;border-left:3px solid #e02828;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.sp803-header{background:#111921;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e02828}
+.sp803-logo{color:#fff;font-size:20px;font-weight:800;letter-spacing:1px;text-transform:uppercase;line-height:1;display:flex;align-items:baseline;gap:6px}
+.sp803-logo b{color:#e02828}
+.sp803-logo small{color:#6b8fa8;font-size:12px;font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.sp803-badge{display:flex;align-items:center;gap:5px;background:#e02828;color:#fff;font-size:11px;font-weight:700;padding:5px 11px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase;flex-shrink:0}
+.sp803-dot{width:6px;height:6px;background:#fff;border-radius:50%;animation:sp803blink 1.2s ease-in-out infinite;flex-shrink:0}
+@keyframes sp803blink{0%,100%{opacity:1}50%{opacity:.1}}
+.sp803-footer{background:#0d1117;padding:9px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #1a2535;flex-wrap:wrap;gap:6px}
+.sp803-hint{color:#4d6a80;font-size:12px;letter-spacing:.2px}
+.sp803-hint b{color:#7a9bb5;font-weight:600}
+.sp803-pill{background:#1a2535;color:#7a9bb5;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px;white-space:nowrap}
+</style>
+
+<div class="sp803-wrap">
+  <div class="sp803-card">
+    <div class="sp803-header">
+      <div class="sp803-logo">Sports<b>803</b><small>· Live TV</small></div>
+      <div class="sp803-badge"><span class="sp803-dot"></span>LIVE</div>
+    </div>
+    <div style="margin:0;background:#000">
+      <iframe
+        loading="lazy"
+        sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+        allow="encrypted-media"
+        width="100%"
+        height="500"
+        src="https://sports803.github.io/player/?embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd1.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd2.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd3.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd4.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd6.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd7.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd8.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd9.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd10.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd11.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fpt%2Fsporttv1.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fpt%2Fsporttv5.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fbra%2Fbr4.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fbra%2Fbr1.php"
+        frameborder="0"
+        scrolling="no"
+        allowfullscreen>
+      </iframe>
+    </div>
+    <div class="sp803-footer">
+      <span class="sp803-hint">Use player controls to <b>switch server or quality</b></span>
+      <span class="sp803-pill">14 Sources</span>
+    </div>
+  </div>
+</div>
+
 }
 function updateHighlightsPlayer(){
   const url=v('highlights-video-url');
@@ -2376,7 +2417,47 @@ function buildRacePlayerIframe(race){
     return type+'='+encodeURIComponent(s.url);
   }).join('&');
   const src=playerBase+'?'+params;
-  return '<div style="margin:18px 0;position:relative;padding-bottom:56.25%;height:0;overflow:hidden"><iframe loading="lazy" sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation" allow="encrypted-media" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" src="'+src+'" frameborder="0" scrolling="no" allowfullscreen></iframe></div>';
+  <style>
+.sp803-wrap{width:100%;margin:16px 0;font-family:'Barlow Condensed','Segoe UI',Arial,sans-serif}
+.sp803-card{background:#0d1117;border-radius:10px;overflow:hidden;border:1px solid #1a2535;border-left:3px solid #e02828;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.sp803-header{background:#111921;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e02828}
+.sp803-logo{color:#fff;font-size:20px;font-weight:800;letter-spacing:1px;text-transform:uppercase;line-height:1;display:flex;align-items:baseline;gap:6px}
+.sp803-logo b{color:#e02828}
+.sp803-logo small{color:#6b8fa8;font-size:12px;font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.sp803-badge{display:flex;align-items:center;gap:5px;background:#e02828;color:#fff;font-size:11px;font-weight:700;padding:5px 11px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase;flex-shrink:0}
+.sp803-dot{width:6px;height:6px;background:#fff;border-radius:50%;animation:sp803blink 1.2s ease-in-out infinite;flex-shrink:0}
+@keyframes sp803blink{0%,100%{opacity:1}50%{opacity:.1}}
+.sp803-footer{background:#0d1117;padding:9px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #1a2535;flex-wrap:wrap;gap:6px}
+.sp803-hint{color:#4d6a80;font-size:12px;letter-spacing:.2px}
+.sp803-hint b{color:#7a9bb5;font-weight:600}
+.sp803-pill{background:#1a2535;color:#7a9bb5;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px;white-space:nowrap}
+</style>
+
+<div class="sp803-wrap">
+  <div class="sp803-card">
+    <div class="sp803-header">
+      <div class="sp803-logo">Sports<b>803</b><small>· Live TV</small></div>
+      <div class="sp803-badge"><span class="sp803-dot"></span>LIVE</div>
+    </div>
+    <div style="margin:0;background:#000">
+      <iframe
+        loading="lazy"
+        sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+        allow="encrypted-media"
+        width="100%"
+        height="500"
+        src="https://sports803.github.io/player/?embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd1.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd2.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd3.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd4.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd6.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd7.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd8.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd9.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd10.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fhd%2Fhd11.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fpt%2Fsporttv1.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fpt%2Fsporttv5.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fbra%2Fbr4.php&embed=https%3A%2F%2Fww2.sporttsonline.click%2Fchannels%2Fbra%2Fbr1.php"
+        frameborder="0"
+        scrolling="no"
+        allowfullscreen>
+      </iframe>
+    </div>
+    <div class="sp803-footer">
+      <span class="sp803-hint">Use player controls to <b>switch server or quality</b></span>
+      <span class="sp803-pill">14 Sources</span>
+    </div>
+  </div>
+</div>
 }
 
 function renderFullRaces(races){
