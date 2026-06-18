@@ -767,7 +767,7 @@ button:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
         </span>
       </div>
       <div class="settings-grid" style="margin-bottom:12px">
-        <div class="form-group"><label>Media Player Base URL</label><input type="text" id="cfg-media-player-base" placeholder="https://alvinalexa.github.io/media-player/"></div>
+        <div class="form-group"><label>Media Player Base URL</label><input type="text" id="cfg-media-player-base" placeholder="https://sports803.github.io/player/"></div>
         <div class="form-group"><label>Prog.txt URL (SportsonLine)</label><input type="text" id="cfg-prog-txt-url" placeholder="https://sportsonline.st/prog.txt"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
@@ -907,7 +907,7 @@ let CFG={
   activeLeagues:['ucl','epl','laliga','seriea','bundesliga','f1','nba','ufc'],
   schedTiming:60,schedStatus:'DRAFT',schedInterval:300000,
   schedEnabled:false,schedThumbs:true,logoOverridesRaw:'',
-  mediaPlayerBase:'https://alvinalexa.github.io/media-player/',
+  mediaPlayerBase:'https://sports803.github.io/player/',
   progTxtUrl:'https://sportsonline.st/prog.txt',
   autoFetchStreams:false,enableDdkanqu:false,enableKafeizhibo:false,embedStreamsInPost:true,
   ddkanquMappingsRaw:'',
@@ -1025,7 +1025,7 @@ function saveCFG(){
   CFG.schedStatus=document.getElementById('sched-def-status')?.value||'DRAFT';
   CFG.schedInterval=parseInt(document.getElementById('sched-interval')?.value||300000);
   CFG.schedThumbs=document.getElementById('sched-thumbs')?.checked||false;
-  CFG.mediaPlayerBase=v('cfg-media-player-base')||'https://alvinalexa.github.io/media-player/';
+  CFG.mediaPlayerBase=v('cfg-media-player-base')||'https://sports803.github.io/player/';
   CFG.progTxtUrl=v('cfg-prog-txt-url')||'https://sportsonline.st/prog.txt';
   CFG.autoFetchStreams=document.getElementById('cfg-auto-fetch-streams')?.checked||false;
   CFG.enableDdkanqu=document.getElementById('cfg-enable-ddkanqu')?.checked||false;
@@ -1049,7 +1049,7 @@ function applyConfigToUI(){
   if(document.getElementById('sched-thumbs'))document.getElementById('sched-thumbs').checked=CFG.schedThumbs||false;
   if(document.getElementById('sched-enabled'))document.getElementById('sched-enabled').checked=CFG.schedEnabled||false;
   document.getElementById('st-leagues').textContent=CFG.activeLeagues.length;
-  set('cfg-media-player-base',CFG.mediaPlayerBase||'https://alvinalexa.github.io/media-player/');
+  set('cfg-media-player-base',CFG.mediaPlayerBase||'https://sports803.github.io/player/');
   set('cfg-prog-txt-url',CFG.progTxtUrl||'https://sportsonline.st/prog.txt');
   set('cfg-ddkanqu-mappings',CFG.ddkanquMappingsRaw||'');
   if(document.getElementById('cfg-auto-fetch-streams'))document.getElementById('cfg-auto-fetch-streams').checked=CFG.autoFetchStreams||false;
@@ -2162,7 +2162,7 @@ function getKafeizhiboSourcesForEvent(ev){
   const key=pairKey(ev.home.name,ev.away.name);
   return kafeizhiboHomeMap[key]||[];
 }
-function buildMultiSourceIframe(sources){if(!sources||!sources.length)return'';const base=(CFG.mediaPlayerBase||'https://alvinalexa.github.io/media-player/').replace(/\/$/,'');const params=sources.map(s=>s.type+'='+encodeURIComponent(s.url)).join('&');const src=base+'?'+params;return'<div style="margin:18px 0;position:relative;padding-bottom:56.25%;height:0;overflow:hidden"><iframe loading="lazy" sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation" allow="encrypted-media" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" src="'+src+'" frameborder="0" scrolling="no" allowfullscreen></iframe></div>';}
+function buildMultiSourceIframe(sources){if(!sources||!sources.length)return'';const base=(CFG.mediaPlayerBase||'https://sports803.github.io/player/').replace(/\/$/,'');const params=sources.map(s=>s.type+'='+encodeURIComponent(s.url)).join('&');const src=base+'?'+params;return'<div style="margin:18px 0;position:relative;padding-bottom:56.25%;height:0;overflow:hidden"><iframe loading="lazy" sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation" allow="encrypted-media" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" src="'+src+'" frameborder="0" scrolling="no" allowfullscreen></iframe></div>';}
 async function refreshAllStreams(){
   if(!CFG.autoFetchStreams){toast('Enable "Auto-fetch External Streams" in Settings first','w');return;}
   updateAggStatus('<span class="spinner"></span> Loading…','i');
@@ -2386,7 +2386,7 @@ async function scrapeFullRacesURL(url,silent=false){
   }
 
   // Build player URL with all sources as embed= params
-  const playerBase=(CFG.mediaPlayerBase||CFG.playerBase||'https://alvinalexa.github.io/media-player/').replace(/\/$/,'');
+  const playerBase=(CFG.mediaPlayerBase||CFG.playerBase||'https://sports803.github.io/player/').replace(/\/$/,'');
   const playerUrl=sources.length
     ?playerBase+'?'+sources.map(s=>'embed='+encodeURIComponent(s.url)).join('&')
     :playerBase;
@@ -2417,7 +2417,7 @@ async function scrapeFullRacesURL(url,silent=false){
 // DDKanqu sources use mora= instead of embed=
 function buildRacePlayerIframe(race){
   if(!race||!race.sources||!race.sources.length)return'';
-  const playerBase=(CFG.mediaPlayerBase||CFG.playerBase||'https://alvinalexa.github.io/media-player/').replace(/\/$/,'');
+  const playerBase=(CFG.mediaPlayerBase||CFG.playerBase||'https://sports803.github.io/player/').replace(/\/$/,'');
   const params=race.sources.map(s=>{
     // DDKanqu links use mora=, everything else uses embed=
     const type=s.url.includes('ddkanqu.com')?'mora':'embed';
@@ -2616,14 +2616,14 @@ async function buildRaceArticleBody(race){
     try{
       const words={short:300,medium:600,long:1000,xl:1500}[CFG.deepseekLength]||600;
       const tone=CFG.deepseekTone||'enthusiastic sports journalist';
-      const player=(CFG.mediaPlayerBase||CFG.playerBase||'https://alvinalexa.github.io/media-player/').replace(/\/$/,'');
+      const player=(CFG.mediaPlayerBase||CFG.playerBase||'https://sports803.github.io/player/').replace(/\/$/,'');
       const prompt='You are a '+tone+' writing for Sports 803.\nWrite a full race replay article for: "'+race.title+'".\n'+(race.dateStr?'Race date: '+race.dateStr+'.\n':'')+(race.sportSlug?'Sport: '+race.sportSlug+'.\n':'')+'Requirements:\n- ~'+words+' words\n- HTML format: use <h2>, <p>, <strong>, <ul><li>\n- Sections: Race Overview, Key Moments, Championship Impact, How To Watch\n- End with: <p>📺 Watch the full race replay FREE on Sports 803: <a href="'+player+'">'+player+'</a></p>\n- Only article HTML, no DOCTYPE or body tags';
       const article=await callClaude(prompt);
       if(article&&article.length>100)return article;
     }catch(e){console.warn('[Claude race article]',e.message);}
   }
   // Rich fallback
-  const player=(CFG.mediaPlayerBase||CFG.playerBase||'https://alvinalexa.github.io/media-player/').replace(/\/$/,'');
+  const player=(CFG.mediaPlayerBase||CFG.playerBase||'https://sports803.github.io/player/').replace(/\/$/,'');
   return '<h2>'+race.title+'</h2>\n<p>Watch the full race replay of <strong>'+race.title+'</strong>'+(race.dateStr?' from '+race.dateStr:'')+' free on Sports 803. '+(race.sportSlug?race.sportSlug.toUpperCase()+' races are available in full HD replay — ':'')+' no subscription required.</p>\n<h2>How To Watch</h2>\n<p>Use the player below to stream the full race. Multiple sources are available — switch between them if one doesn\'t load.</p>\n<p>📺 Watch FREE on Sports 803: <a href="'+player+'">'+player+'</a></p>';
 }
 
