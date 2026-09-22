@@ -2082,7 +2082,11 @@ function renderPostLog(){
 // ═══ LEAGUE TOGGLES ═══
 function renderLeagueToggles(){
   const c=document.getElementById('league-toggles');
-  c.innerHTML=LEAGUES.map(l=>{const on=CFG.activeLeagues.includes(l.id);return'<label class="ltog toggle '+(on?'on':'')+'" style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleLeague(\''+l.id+'\',this.checked)"><div class="tslider"></div><span style="font-size:.73rem;font-weight:'+(on?700:600)+';color:'+(on?'var(--green)':'var(--muted2)')+';text-transform:none;letter-spacing:0">'+l.icon+' '+l.name+'</span><span style="margin-left:auto;font-size:.58rem;font-family:var(--cond);font-weight:800;padding:1px 5px;border-radius:3px;background:'+(on?'var(--green)':'var(--bg4)')+';color:'+(on?'#07080c':'var(--muted2)')+'">'+( on?'ON':'OFF')+'</span></label>';}).join('');
+  const requestedIds=['uwcl','eflt','wnba'];
+  const requested=LEAGUES.filter(l=>requestedIds.includes(l.id));
+  const otherLeagues=LEAGUES.filter(l=>!requestedIds.includes(l.id));
+  const renderLeague=l=>{const on=CFG.activeLeagues.includes(l.id);return'<label class="ltog toggle '+(on?'on':'')+'" style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleLeague(\''+l.id+'\',this.checked)"><div class="tslider"></div><span style="font-size:.73rem;font-weight:'+(on?700:600)+';color:'+(on?'var(--green)':'var(--muted2)')+';text-transform:none;letter-spacing:0">'+l.icon+' '+l.name+'</span><span style="margin-left:auto;font-size:.58rem;font-family:var(--cond);font-weight:800;padding:1px 5px;border-radius:3px;background:'+(on?'var(--green)':'var(--bg4)')+';color:'+(on?'#07080c':'var(--muted2)')+'">'+( on?'ON':'OFF')+'</span></label>';};
+  c.innerHTML='<div style="grid-column:1/-1;color:var(--blue);font-family:var(--cond);font-size:.68rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:2px 2px 0">OneBall requested leagues</div>'+requested.map(renderLeague).join('')+'<div style="grid-column:1/-1;color:var(--muted2);font-family:var(--cond);font-size:.68rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:10px 2px 0">Other leagues</div>'+otherLeagues.map(renderLeague).join('');
   updateLeagueCount();
 }
 function toggleLeague(id,on){if(on){if(!CFG.activeLeagues.includes(id))CFG.activeLeagues.push(id);}else CFG.activeLeagues=CFG.activeLeagues.filter(x=>x!==id);saveCFG();renderLeagueToggles();document.getElementById('st-leagues').textContent=CFG.activeLeagues.length;}
