@@ -899,12 +899,13 @@ button:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
 'use strict';
 const SK_CFG='s803v7_cfg',SK_CH='s803v7_ch',SK_POST='s803v7_post',SK_LOGO='s803v7_logo',SK_DDKC='s803v7_ddkc',SK_FR='s803v7_fr';
 const ESPN='https://site.api.espn.com/apis/site/v2/sports';
+const ONEBALL='https://oneball.live/';
 const TSDB='https://www.thesportsdb.com/api/v1/json/3';
 const CLAUDE_API='https://api.anthropic.com/v1/messages';
 
 let CFG={
   blogId:'',clientId:'',imgbbKey:'',playerBase:'https://soulmap1.blogspot.com/p/media-player.html',
-  activeLeagues:['ucl','epl','laliga','seriea','bundesliga','f1','nba','ufc'],
+  activeLeagues:['ucl','epl','laliga','seriea','bundesliga','f1','nba','wnba','ufc','uwcl','eflt'],
   schedTiming:60,schedStatus:'DRAFT',schedInterval:300000,
   schedEnabled:false,schedThumbs:true,logoOverridesRaw:'',
   mediaPlayerBase:'https://sports803.github.io/player/',
@@ -958,6 +959,8 @@ function zhToEn(n){return ZH_EN_TEAMS[n]||n;}
 
 const LEAGUES=[
   {id:'ucl',sport:'soccer',slug:'uefa.champions',name:'Champions League',icon:'🏆',type:'match'},
+  {id:'uwcl',source:'oneball',name:'UEFA Women\'s Champions League',icon:'🏆',type:'match'},
+  {id:'eflt',source:'oneball',name:'English Football League Trophy',icon:'🏆',type:'match'},
   {id:'uel',sport:'soccer',slug:'uefa.europa',name:'Europa League',icon:'🟠',type:'match'},
   {id:'epl',sport:'soccer',slug:'eng.1',name:'Premier League',icon:'🦁',type:'match'},
   {id:'laliga',sport:'soccer',slug:'esp.1',name:'La Liga',icon:'🇪🇸',type:'match'},
@@ -969,6 +972,7 @@ const LEAGUES=[
   {id:'euro',sport:'soccer',slug:'uefa.euro',name:'UEFA Euro',icon:'🇪🇺',type:'match'},
   {id:'intlfriendly',sport:'soccer',slug:'fifa.friendly',name:'Intl Friendlies',icon:'🤝',type:'match'},
   {id:'nba',sport:'basketball',slug:'nba',name:'NBA',icon:'🏀',type:'match'},
+  {id:'wnba',source:'oneball',name:'Women\'s National Basketball Association',icon:'🏀',type:'match'},
   {id:'nfl',sport:'football',slug:'nfl',name:'NFL',icon:'🏈',type:'match'},
   {id:'nhl',sport:'hockey',slug:'nhl',name:'NHL',icon:'🏒',type:'match'},
   {id:'f1',sport:'racing',slug:'f1',name:'Formula 1',icon:'🏎️',type:'race'},
@@ -1513,8 +1517,45 @@ async function fetchAllEvents(){
   if(CFG.autoFetchStreams){toast('Loading external streams…','i');await loadExternalStreams();ddkanquMappings=parseDDKMappings(CFG.ddkanquMappingsRaw);}
 }
 async function fetchLeague(league){
-  try{const td=v('target-date');const dp=td?'?dates='+td.replace(/-/g,''):'';const res=await fetch(ESPN+'/'+league.sport+'/'+league.slug+'/scoreboard'+dp);if(!res.ok)throw new Error('HTTP '+res.status);const data=await res.json();return(data.events||[]).map(ev=>parseESPN(ev,league));}
-  catch(e){console.warn('[Fetch] '+league.name+':',e.message);return[];}
+  try{
+    if(league.source==='oneball') return await fetchOneBallLeague(league);
+    const td=v('target-date');const dp=td?'?dates='+td.replace(/-/g,''):'';const res=await fetch(ESPN+'/'+league.sport+'/'+league.slug+'/scoreboard'+dp);if(!res.ok)throw new Error('HTTP '+res.status);const data=await res.json();return(data.events||[]).map(ev=>parseESPN(ev,league));
+  }catch(e){console.warn('[Fetch] '+league.name+':',e.message);return[];}
+}
+
+// OneBall publishes its schedule as server-rendered match cards. We intentionally
+// read the card href; never construct a /live/{id}.html URL from team names or IDs.
+let oneBallSchedulePromise=null;
+async function fetchOneBallSchedule(){
+  if(!oneBallSchedulePromise){
+    oneBallSchedulePromise=fetch(ONEBALL,{headers:{'Accept':'text/html'}}).then(res=>{if(!res.ok)throw new Error('HTTP '+res.status);return res.text();}).then(html=>new DOMParser().parseFromString(html,'text/html'));
+  }
+  return oneBallSchedulePromise;
+}
+function oneBallStatus(card){
+  const cls=String(card.className||'').toLowerCase();
+  if(cls.includes('live'))return'In Progress';
+  if(cls.includes('finished'))return'Final';
+  if(cls.includes('postponed'))return'Postponed';
+  return'Scheduled';
+}
+function parseOneBallCard(card,league){
+  const href=card.getAttribute('href');
+  if(!href)return null;
+  const sourceUrl=new URL(href,ONEBALL).href;
+  const sourceId=card.getAttribute('data-match-id')||sourceUrl.match(/\/live\/(\d+)\.html/i)?.[1];
+  if(!sourceId)return null;
+  const names=[...card.querySelectorAll('.team-name')].map(n=>n.textContent.trim());
+  if(!names[0]||!names[1])return null;
+  const time=card.getAttribute('data-match-time')||card.querySelector('[data-beijing-time]')?.getAttribute('data-beijing-time')||'';
+  const scoreText=card.querySelector('.score')?.textContent.trim()||'';
+  const score=scoreText.match(/(\d+)\s*[-–]\s*(\d+)/);
+  const logos=[...card.querySelectorAll('.team-logo img')].map(img=>img.getAttribute('src')||'');
+  return {id:'oneball:'+sourceId,sourceId,sourceUrl,source:'OneBall',league,type:'match',home:{name:names[0],logo:logos[0]||'',score:score?score[1]:''},away:{name:names[1],logo:logos[1]||'',score:score?score[2]:''},status:oneBallStatus(card),startTime:time?new Date(time):null};
+}
+async function fetchOneBallLeague(league){
+  const doc=await fetchOneBallSchedule();
+  return [...doc.querySelectorAll('a.match-card[href]')].filter(card=>card.querySelector('.league-badge')?.getAttribute('title')===league.name).map(card=>parseOneBallCard(card,league)).filter(Boolean);
 }
 function parseESPN(ev,league){
   const comp=ev.competitions?.[0]||{};const comps=comp.competitors||[];const status=ev.status?.type?.description||'Scheduled';const startTime=ev.date?new Date(ev.date):null;
@@ -1545,7 +1586,8 @@ function renderMatchCard(ev){
   const aLogo=ev.away.logo||LOGO_CACHE[ev.away.name.toLowerCase()]||'';
   const hChip='<div class="logo-chip"><img src="'+(hLogo?'https://wsrv.nl/?url='+encodeURIComponent(hLogo)+'&w=80&h=80&fit=contain&n=-1&we':fbLogo(ev.home.name))+'" onerror="this.src=\''+fbLogo(ev.home.name)+'\'" alt="'+ev.home.name+'" style="width:100%;height:100%;object-fit:contain"></div>';
   const aChip='<div class="logo-chip"><img src="'+(aLogo?'https://wsrv.nl/?url='+encodeURIComponent(aLogo)+'&w=80&h=80&fit=contain&n=-1&we':fbLogo(ev.away.name))+'" onerror="this.src=\''+fbLogo(ev.away.name)+'\'" alt="'+ev.away.name+'" style="width:100%;height:100%;object-fit:contain"></div>';
-  return'<div class="event-card '+(pl?.thumb?'has-thumb':'')+' '+(pl?.postId?'posted':'')+'" data-id="'+ev.id+'"><div class="ec-top"><span class="ec-league">'+ev.league.icon+' '+ev.league.name+'</span><div style="display:flex;align-items:center;gap:4px">'+thumbBadge+badge+'<span class="ec-status '+sc+'">'+ev.status+'</span></div></div><div class="ec-match"><div class="ec-team">'+hChip+'<div class="ec-team-name">'+ev.home.name+'</div></div><div style="display:flex;flex-direction:column;align-items:center"><div class="ec-vs">'+(ev.home.score!==''?ev.home.score+' – '+ev.away.score:'vs')+'</div><div class="ec-time">'+ts+'</div></div><div class="ec-team">'+aChip+'<div class="ec-team-name">'+ev.away.name+'</div></div></div>'+(pl?.postUrl?'<div style="font-size:.62rem;color:var(--muted2)">📝 <a href="'+pl.postUrl+'" target="_blank" style="color:var(--blue)">View post</a></div>':'')+'<div class="ec-actions"><button class="btn-red btn-sm" onclick="genAndFill(\''+sid+'\')">✍️ Gen</button><button class="btn-blue btn-sm" onclick="quickPostEv(\''+sid+'\')">📤 Post</button><button class="btn-gold btn-sm" onclick="genThumbForEv(\''+sid+'\')">🖼️ Thumb</button><button class="btn-orange btn-sm" onclick="openHLForEv(\''+sid+'\')" title="Post Highlights / Update">🎬 HL</button></div></div>';
+  const source=ev.sourceUrl?'<div style="font-size:.62rem;color:var(--muted2);margin-top:5px">Source: <a href="'+ev.sourceUrl+'" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">OneBall event page ↗</a></div>':'';
+  return'<div class="event-card '+(pl?.thumb?'has-thumb':'')+' '+(pl?.postId?'posted':'')+'" data-id="'+ev.id+'"><div class="ec-top"><span class="ec-league">'+ev.league.icon+' '+ev.league.name+'</span><div style="display:flex;align-items:center;gap:4px">'+thumbBadge+badge+'<span class="ec-status '+sc+'">'+ev.status+'</span></div></div><div class="ec-match"><div class="ec-team">'+hChip+'<div class="ec-team-name">'+ev.home.name+'</div></div><div style="display:flex;flex-direction:column;align-items:center"><div class="ec-vs">'+(ev.home.score!==''?ev.home.score+' – '+ev.away.score:'vs')+'</div><div class="ec-time">'+ts+'</div></div><div class="ec-team">'+aChip+'<div class="ec-team-name">'+ev.away.name+'</div></div></div>'+source+(pl?.postUrl?'<div style="font-size:.62rem;color:var(--muted2)">📝 <a href="'+pl.postUrl+'" target="_blank" style="color:var(--blue)">View post</a></div>':'')+'<div class="ec-actions"><button class="btn-red btn-sm" onclick="genAndFill(\''+sid+'\')">✍️ Gen</button><button class="btn-blue btn-sm" onclick="quickPostEv(\''+sid+'\')">📤 Post</button><button class="btn-gold btn-sm" onclick="genThumbForEv(\''+sid+'\')">🖼️ Thumb</button><button class="btn-orange btn-sm" onclick="openHLForEv(\''+sid+'\')" title="Post Highlights / Update">🎬 HL</button></div></div>';
 }
 function renderRaceCard(ev){
   const ts=ev.startTime?ev.startTime.toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'TBD';
